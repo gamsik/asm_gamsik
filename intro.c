@@ -10,13 +10,7 @@
 
 void gotoxy(int x, int y);
 
-void CursorView()
-{
-	CONSOLE_CURSOR_INFO cursorInfo = { 0, };
-	cursorInfo.dwSize = 1; //커서 굵기 (1 ~ 100)
-	cursorInfo.bVisible = FALSE; //커서 Visible TRUE(보임) FALSE(숨김)
-	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
-}
+void CursorView();
 
 void map();
 
@@ -29,11 +23,12 @@ int main(void) {
 	CursorView();
 	int i = 0, j = 0;
 
-	int x1 = 30, y1 = 12;//실질적인 좌표값
-	int x2 = 0, y2 = 0;
+	int x1 = 30, y1 = 12;//머리의 좌표값
+	int alt_x = 0, alt_y = 0;
 	int px = rand() % 23 + 19, py = rand() % 23 + 2;
 	int score = 0;
-	int trace[ 500 ] = { 0, };
+	int tracex[ 50 ] = { 10 , 10 , 10, 10, 0, };//마디마디의 X좌표값
+	int tracey[ 50 ] = { 10 , 10 , 10, 10, 0, };//마디마디의 Y좌표값
 
 
 	char kpt1[5] = "○";
@@ -47,6 +42,9 @@ int main(void) {
 	gotoxy(24, 8);
 	printf("[ PRESS ENTER TO START ]");
 
+	gotoxy(28, 12);
+	printf("LOADING");
+
 	while (1) {
 		if (_kbhit()) {
 			if (key() == 13) {
@@ -55,6 +53,13 @@ int main(void) {
 				break;
 			}
 		}
+		gotoxy(28, 13);
+		for (i = 0; i < 7; i++) {
+			if (i != j % 7) printf("□");
+			else			printf("■");
+		}
+		j++;
+		Sleep(200);
 	}
 
 	gotoxy(3, 12);
@@ -67,40 +72,40 @@ int main(void) {
 	printf("%s", peed);
 
 	gotoxy(x1, y1);
-		
 
+	
 	while (1) {
 		if (_kbhit()) {
 			if (key() == 224 || key() == 0) {
 				switch (key()) {
 				case LEFT:
-					if (x2 != 1) {
-						x2 = -1;
-						y2 = 0;
+					if (alt_x != 1) {
+						alt_x = -1;
+						alt_y = 0;
 						break;
 					}
 					else break;
 
 				case RIGHT:
-					if (x2 != -1) {
-						x2 = 1;
-						y2 = 0;
+					if (alt_x != -1) {
+						alt_x = 1;
+						alt_y = 0;
 						break;
 					}
 					else break;
 
 				case UP:
-					if (y2 != 1) {
-						y2 = -1;
-						x2 = 0;
+					if (alt_y != 1) {
+						alt_y = -1;
+						alt_x = 0;
 						break;
 					}
 					else break;
 
 				case DOWN:
-					if (y2 != -1) {
-						y2 = 1;
-						x2 = 0;
+					if (alt_y != -1) {
+						alt_y = 1;
+						alt_x = 0;
 						break;
 					}
 					else break;
@@ -113,40 +118,48 @@ int main(void) {
 		}
 
 		if (x1 == px && y1 == py) {
-			score += 2;
+			score++;
 			gotoxy(50, 12);
-			printf("점수 : %d", score / 2);
+			printf("점수 : %d", score);
+			
 			px = rand() % 23 + 19, py = rand() % 23 + 2;
 			gotoxy(px, py);
 			printf("%s", peed);
 		}
 
-		if (x1 == 18 || x1 == 42 || y1 == 1 || y1 == 25) {
+		if (x1 == 18 || x1 == 42 || y1 == 1 || y1 == 25) {//외벽에 닿으면 죽는다.
 			system("cls");
 			gotoxy(28, 12);
 			printf("점수 : %2d", score);
 			return 0;
 		}
-		
-		if (i > score) {
-			i = 0;
 
-			gotoxy(trace[0], trace[1]);
-			printf("  ");
-		}
-		if (i <= score) {
-			trace[i] = x1; trace[i + 1] = y1;
-			i += 2;
-		}
-		
-		if (x2 == 1) x1++;
-		if (x2 == -1) x1--;
-		if (y2 == 1) y1++;
-		if (y2 == -1) y1--;
+		if (alt_x ==  1) x1++;
+		if (alt_x == -1) x1--;
+		if (alt_y ==  1) y1++;
+		if (alt_y == -1) y1--;
 
 		gotoxy(x1, y1);
 		printf("%s", kpt1);
 		Sleep(200);
+
+		tracex[score + 3] = x1;
+		tracey[score + 3] = y1;
+
+		for (i = 1;i < score + 4; i++){
+
+			tracex[i - 1] = tracex[i];
+			tracey[i - 1] = tracey[i];
+
+			if (i >= 1 && i < score + 2 && tracex[i] == x1 && tracey[i] == y1) { //꼬리에 닿으면 죽는다.
+				system("cls");
+				gotoxy(28, 12);
+				printf("점수 : %2d", score);
+				return 0;
+			}
+		}
+		gotoxy(tracex[0], tracey[0]);
+		printf("  ");
 	}
 	return 0;
 }
@@ -167,4 +180,12 @@ void map() {
 		}
 		printf("\n");
 	}
+}
+
+void CursorView()
+{
+	CONSOLE_CURSOR_INFO cursorInfo = { 0, };
+	cursorInfo.dwSize = 1; //커서 굵기 (1 ~ 100)
+	cursorInfo.bVisible = FALSE; //커서 Visible TRUE(보임) FALSE(숨김)
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
 }
